@@ -1,0 +1,200 @@
+version: "3.7"
+
+services:
+  web-server:
+    image: nginx
+    container_name: re-web-server
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-dev-local.conf:/etc/nginx/nginx.conf
+  configurator-fe:
+    container_name: configurator-fe
+    hostname: configurator_fe
+    image: configurator_fe
+    build:
+      context: .
+      dockerfile: ./apps/configurator/Dockerfile
+      target: development
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npx nx serve --host 0.0.0.0 --poll 2000
+  configurator-be:
+    container_name: configurator-be
+    hostname: configurator_be
+    image: configurator_be
+    build:
+      context: .
+      dockerfile: ./apps/configurator-be/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$CONFIGURATOR_PORT:$CONFIGURATOR_PORT"
+      - "9111:9229"
+    command: npx nx serve configurator-be
+    depends_on:
+      - web-server
+  earn-api:
+    container_name: earn-api
+    hostname: earn_api
+    image: earn_api
+    build:
+      context: .
+      dockerfile: ./apps/services/earn-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$EARN_PORT:$EARN_PORT"
+      - "9112:9229"
+    command: npx nx serve services-earn-api
+    depends_on:
+      - web-server
+  common-api:
+    container_name: common-api
+    hostname: common_api
+    image: common_api
+    build:
+      context: .
+      dockerfile: ./apps/services/common-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$COMMON_PORT:$COMMON_PORT"
+      - "9113:9229"
+    command: npx nx serve services-common-api
+    depends_on:
+      - web-server
+  transaction-api:
+    container_name: transaction-api
+    hostname: transaction_api
+    image: transaction_api
+    build:
+      context: .
+      dockerfile: ./apps/services/transaction-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$TRANSACTION_PORT:$TRANSACTION_PORT"
+      - "9114:9229"
+    command: npx nx serve services-transaction-api
+    depends_on:
+      - web-server
+  rewards-api:
+    container_name: rewards-api
+    hostname: rewards_api
+    image: rewards_api
+    build:
+      context: .
+      dockerfile: ./apps/services/rewards-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$REWARD_PORT:$REWARD_PORT"
+      - "9115:9229"
+    command: npx nx serve services-rewards-api
+    depends_on:
+      - web-server
+  unique-identifier-api:
+    container_name: unique-identifier-api
+    hostname: unique_identifier_api
+    image: unique_identifier_api
+    build:
+      context: .
+      dockerfile: ./apps/services/unique-identifier-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$UNIQUE_IDENTIFIER_PORT:$UNIQUE_IDENTIFIER_PORT"
+      - "9116:9229"
+    command: npx nx serve services-unique-identifier-api
+    depends_on:
+      - web-server
+  member-api:
+    container_name: member-api
+    hostname: member_api
+    image: member_api
+    build:
+      context: .
+      dockerfile: ./apps/services/member-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$MEMBER_PORT:$MEMBER_PORT"
+      - "9119:9229"
+    command: npx nx serve services-member-api
+    depends_on:
+      - web-server
+  auth-api:
+    container_name: auth-api
+    hostname: auth_api
+    image: auth_api
+    build:
+      context: .
+      dockerfile: ./apps/services/auth-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$AUTH_PORT:$AUTH_PORT"
+      - "9118:9229"
+    command: npx nx serve services-auth-api
+    depends_on:
+      - web-server
+  burn-api:
+    container_name: burn-api
+    hostname: burn-api
+    image: burn_api
+    build:
+      context: .
+      dockerfile: ./apps/services/burn-api/Dockerfile
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "$BURN_PORT:$BURN_PORT"
+      - "9120:9229"
+    command: npx nx serve services-burn-api
+    depends_on:
+      - web-server
+  lms2_db_1:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${CONFIGURATOR_DB_PASSWORD:?err}
+      POSTGRES_USER: ${CONFIGURATOR_DB_USER:?err}
+      POSTGRES_DB: ${CONFIGURATOR_DB_NAME:?err}
+    ports:
+      - "5436:5432"
+    volumes:
+      - re2_pgdata:/var/lib/postgresql/data
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: 're-rabbitmq'
+  #   ports:
+  #       - 5673:5672
+  #       - 15673:15672
+  #   volumes:
+  #       - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+  #       - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+volumes:
+  re2_pgdata:
